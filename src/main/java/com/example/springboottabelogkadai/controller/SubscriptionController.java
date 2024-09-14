@@ -31,11 +31,9 @@ public class SubscriptionController {
 	
 	@GetMapping
 	public String index(Model model, HttpServletRequest httpServletRequest) {
-		String sessionId = stripeService.careateStripeSession(httpServletRequest);
-		
-		model.addAttribute("sessionId", sessionId);
-		
-		return "subscription/index";
+	    String sessionId = stripeService.createStripeSession(httpServletRequest);
+	    model.addAttribute("sessionId", sessionId);
+	    return "subscription/index";
 	}
 	
 	@GetMapping("/cancel")
