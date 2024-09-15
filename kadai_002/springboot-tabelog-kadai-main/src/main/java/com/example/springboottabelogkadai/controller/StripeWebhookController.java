@@ -63,7 +63,8 @@ public class StripeWebhookController {
 			HttpServletResponse response, Model model) throws IOException {
 		Stripe.apiKey = stripeApiKey;
 		Event event = null;
-
+		
+		
 		try {
 
 			event = Webhook.constructEvent(payload, sigHeader, webhookSecret);
