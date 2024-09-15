@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+	<div th:replace="~{fragment :: meta}"></div>
+
+	<div th:replace="~{fragment :: styles}"></div>
+
+	<script src="/js/favorite.js" defer></script>
+	<script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=default"></script>
+	<script type="module" src="/js/initMap.js"></script>
+	<script th:inline="javascript">
+		const hasFavorites = /*[[${userHasFavorites}]]*/ false;
+	</script>
+	<title>店舗詳細</title>
+
+</head>
+
+<body>
+	<div class="nagoyameshi-wrapper">
+		<!-- ヘッダー -->
+		<div th:replace="~{fragment :: header}">
+		</div>
+
+		<main>
+			<div class="container pt-3 pb-5 nagoyameshi-container">
+				<div class="row justify-content-center">
+					<div class="col-xxl-9 col-xl-10 col-lg-11">
+						<nav class="mb-4" style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+							<ol class="breadcrumb mb-0">
+								<li class="breadcrumb-item"><a th:href="@{/}">ホーム</a></li>
+								<li class="breadcrumb-item"><a th:href="@{/shops}">店舗一覧</a></li>
+								<li class="breadcrumb-item active" aria-current="page">店舗詳細</li>
+							</ol>
+						</nav>
+
+						<h1 id="shop-name" class="text-center mb-3" th:text="${shop.getName()}"></h1>
+
+						<div th:if=" ${errorMessage}" class="alert alert-danger">
+							<span th:text="${errorMessage}"></span>
+						</div>
+
+						<div class="row">
+							<div class="col-md-4 mb-4">
+								<div class="d-flex flex-sm-justify-content-center">
+									<!-- 口コミボタンを追加 -->
+									<div>
+										<button id="googleReviewButton" type="button"
+											class="btn btn-link text-decolation-none fs-6">Googleクチコミへ</button>
+									</div>
+
+									<div sec:authorize="hasRole('ROLE_PAYMEMBER')" class="ms-auto fs-4">
+										<div id="add-favorite-div" style="display: none;">
+											<form id="add-favorite-form" method="post" th:action="@{/favorite/add}">
+												<input type="hidden" name="shopId" th:value="${shop.id}">
+												<button class="btn btn-primary btn-sm">
+													&#9825;お気に入り追加</button> <!-- &#9825; は ♡ -->
+											</form>
+										</div>
+
+										<div id="delete-favorite-div" style="display: none;">
+											<form id="delete-favorite-form" method="post"
+												th:action="@{/favorite/delete}">
+												<input type="hidden" name="shopId" th:value="${shop.id}">
+												<button class="btn btn-light border border-dark btn-sm">
+													&#9829;お気に入り解除</button> <!-- &#9829; は ♥ -->
+											</form>
+										</div>
+									</div>
+								</div>
+
+								<div class="image-container">
+									<img th:if="${shop.getImageName()}" th:src="@{/storage/__${shop.getImageName()}__}"
+										class="img-fluid" alt="店舗画像">
+									<img th:unless="${shop.getImageName()}" th:src="@{/images/noImage.png}"
+										class="img-fluid" alt="NO IMAGE">
+								</div>
+
+
+								<div sec:authorize="isAnonymous()" class="col-lg-12 px-0 mt-4">
+									<div class="card">
+										<div class="card-body">
+											<p class="card-text">予約するには<a th:href="@{/login}">ログイン</a>が必要です。</p>
+											<button type="submit" class="btn text-white shadow-sm w-100 nagoyameshi-btn"
+												disabled>予約する</button>
+										</div>
+									</div>
+								</div>
+								<div sec:authorize="isAuthenticated() and !hasRole('ROLE_ADMIN')"
+									class="col-lg-12 px-0 mt-4">
+									<div class="card">
+										<div class="card-body">
+											<a th:href="@{/reservation/__${shop.getId()}__}">
+												<button type="submit"
+													class="btn text-white shadow-sm w-100 nagoyameshi-btn"
+													disabled>予約する</button>
+											</a>
+										</div>
+									</div>
+								</div>
+							</div>
+
+							<div class="card col-md-8 mb-3 pt-2" style="background-color:rgb(255, 252, 191);">
+								<div class="col-12 container">
+									<div class="row pb-2 mb-2 border-bottom">
+										<div class="col-2">
+											<span class="fw-bold">カテゴリ</span>
+										</div>
+
+										<div class="col">
+											<span th:each="categories : ${category}">
+												<td th:if="${categories.getId() == shop.getCategoriesId()}"
+													th:text="${categories.getCategoryName()}"></td>
+											</span>
+										</div>
+									</div>
+
+									<div class="row pb-2 mb-2 border-bottom">
+										<div class="col-2">
+											<span class="fw-bold">説明</span>
+										</div>
+
+										<div class="col">
+											<span class="nagoyameshi-pre-wrap"
+												th:text="${shop.getDescription()}"></span>
+										</div>
+									</div>
+
+
+									<div class="row pb-2 mb-2 border-bottom">
+										<div class="col-2">
+											<span class="fw-bold">住所</span>
+										</div>
+
+										<div class="col">
+											<span th:text="'〒' + ${shop.getPostalCode()}"></span>
+											<br>
+											<span id="address" th:text="${shop.getAddress()}"></span>
+										</div>
+									</div>
+
+									<div class="row pb-2 mb-2 border-bottom">
+										<div class="col-2">
+											<span class="fw-bold">電話番号</span>
+										</div>
+
+										<div class="col">
+											<span th:text="${shop.getPhoneNumber()}"></span>
+										</div>
+									</div>
+
+									<div class="row pb-2 mb-2 border-bottom">
+										<div class="col-2">
+											<span class="fw-bold">営業時間</span>
+										</div>
+
+										<div class="col">
+											<span th:text="${shop.getOpenTime()} + '～' + ${shop.getCloseTime}"></span>
+										</div>
+									</div>
+
+									<div class="row pb-2 mb-2 border-bottom">
+										<div class="col-2">
+											<span class="fw-bold">定休日</span>
+										</div>
+
+										<div class="col">
+											<span th:text="${shop.getRegularHoliday()}"></span>
+										</div>
+									</div>
+
+									<div class="row pb-2 mb-2 border-bottom">
+										<div class="col-2">
+											<span class="fw-bold">価格帯</span>
+										</div>
+
+										<div class="col">
+											<span
+												th:text="${#numbers.formatInteger(shop.getPrice(), 1, 'COMMA') + '円～'}"></span>
+										</div>
+									</div>
+
+									<div class="row pb-2 mb-2 border-bottom">
+										<div class="col-2">
+											<span class="fw-bold">座席数</span>
+										</div>
+
+										<div class="col">
+											<span th:text="${shop.getSeats() + '席'}"></span>
+										</div>
+									</div>
+
+									<div class="row pb-2 border-bottom">
+										<div class="col-2">
+											<span class="fw-bold">Webサイト</span>
+										</div>
+
+										<div class="col">
+											<a th:href="@{${shop.getShopSite()}}" th:text="${shop.getShopSite()}"
+												target="_blank" rel="noopener noreferrer"></a>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<div id="map" class="ratio ratio-16x9"></div>
+						<!--変数を用いてAPIキーを参照-->
+						<script>
+							(g => {var h, a, k, p = "The Google Maps JavaScript API", c = "google", l = "importLibrary", q = "__ib__", m = document, b = window; b = b[c] || (b[c] = {}); var d = b.maps || (b.maps = {}), r = new Set, e = new URLSearchParams, u = () => h || (h = new Promise(async (f, n) => {await (a = m.createElement("script")); e.set("libraries", [...r] + ""); for (k in g) e.set(k.replace(/[A-Z]/g, t => "_" + t[0].toLowerCase()), g[k]); e.set("callback", c + ".maps." + q); a.src = `https://maps.${c}apis.com/maps/api/js?` + e; d[q] = f; a.onerror = () => h = n(Error(p + " could not load.")); a.nonce = m.querySelector("script[nonce]")?.nonce || ""; m.head.append(a)})); d[l] ? console.warn(p + " only loads once. Ignoring:", g) : d[l] = (f, ...n) => r.add(f) && u().then(() => d[l](f, ...n))})({
+								key: "[[${googleApiKey}]]",
+								v: "weekly",
+							});
+						</script>
+					</div>
+				</div>
+			</div>
+		</main>
+
+		<!-- フッター -->
+		<div th:replace="~{fragment :: footer}"></div>
+	</div>
+
+	<div th:replace="~{fragment :: scripts}"></div>
+	<!-- 外部JavaScriptファイルを読み込む -->
+	<script src="/js/googleReview.js"></script>
+</body>
+
+</html>

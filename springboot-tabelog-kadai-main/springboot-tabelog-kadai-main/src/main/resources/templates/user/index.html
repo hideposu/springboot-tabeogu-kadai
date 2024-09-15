@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+	<div th:replace="~{fragment :: meta}"></div>
+	<div th:replace="~{fragment :: styles}"></div>
+
+	<meta name="csrf-token" th:content="${_csrf.token}" />
+
+	<title>会員情報</title>
+</head>
+
+<body>
+	<div class="nagoyameshi-wrapper">
+		<!-- ヘッダー -->
+		<div th:replace="~{fragment :: header}"></div>
+
+		<main>
+			<div class="container pt-3 pb-5 nagoyameshi-container">
+				<div class="row justify-content-center">
+					<div class="col-xl-5 col-lg-6 col-md-8">
+						<nav class="my-3 mb-5" style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+							<ol class="breadcrumb mb-0">
+								<li class="breadcrumb-item"><a th:href="@{/}">ホーム</a></li>
+								<li class="breadcrumb-item active" aria-current="page">マイページ</li>
+							</ol>
+						</nav>
+
+						<div th:if="${successMessage}" class="alert alert-info">
+							<span th:text="${successMessage}"></span>
+						</div>
+
+						<details>
+							<summary>会員情報</summary>
+							<h1 class="mb-3 text-center">会員情報</h1>
+
+							<div class="d-flex justify-content-end align-items-end mb-3">
+								<div>
+									<a th:href="@{/user/edit}">編集</a>
+								</div>
+							</div>
+
+
+							<div class="container mb-4">
+								<div class="row pb-2 mb-2 border-bottom">
+									<div class="col-4">
+										<span class="fw-bold">氏名</span>
+									</div>
+
+									<div class="col">
+										<span th:text="${user.getName()}"></span>
+									</div>
+								</div>
+
+								<div class="row pb-2 mb-2 border-bottom">
+									<div class="col-4">
+										<span class="fw-bold">フリガナ</span>
+									</div>
+
+									<div class="col">
+										<span th:text="${user.getFurigana()}"></span>
+									</div>
+								</div>
+
+								<div class="row pb-2 mb-2 border-bottom">
+									<div class="col-4">
+										<span class="fw-bold">生年月日</span>
+									</div>
+
+									<div class="col">
+										<span th:text="${user.getBirthday()}"></span>
+									</div>
+								</div>
+
+								<div class="row pb-2 mb-2 border-bottom">
+									<div class="col-4">
+										<span class="fw-bold">電話番号</span>
+									</div>
+
+									<div class="col">
+										<span th:text="${user.getPhoneNumber()}"></span>
+									</div>
+								</div>
+
+								<div class="row pb-2 mb-2 border-bottom">
+									<div class="col-4">
+										<span class="fw-bold">職業</span>
+									</div>
+									<div class="col">
+										<span th:text="${user.getProfession()}"></span>
+									</div>
+								</div>
+
+								<div class="row pb-2 mb-2 border-bottom">
+									<div class="col-4">
+										<span class="fw-bold">メールアドレス</span>
+									</div>
+
+									<div class="col">
+										<span th:text="${user.getMail()}"></span>
+									</div>
+								</div>
+							</div>
+						</details>
+						<div class="m-3">
+							<a th:href="@{/pass}">パスワード変更</a>
+						</div>
+						<!-- アカウント削除リンク & モーダル -->
+						<div class="m-3">
+							<!-- ROLE_FREEMEMBERの場合 -->
+							<a href="#" data-bs-toggle="modal"
+								th:attr="data-bs-target=${'#deleteUserModal' + user.getId()}"
+								th:if="${#authorization.expression('hasRole(''ROLE_FREEMEMBER'')')}">
+								アカウント削除
+							</a>
+
+							<!-- ROLE_PAYMEMBERの場合 -->
+							<span th:unless="${#authorization.expression('hasRole(''ROLE_FREEMEMBER'')')}">
+								アカウント削除<br>
+								<span style="font-size: 12px; color:red;">※アカウント削除は、有料会員解約後に削除してください。</span>
+							</span>
+						</div>
+						<!-- 削除用モーダル -->
+						<div class="modal fade" th:id="${'deleteUserModal' + user.getId()}" tabindex="-1"
+							th:aria-labelledby="${'deleteUserModalLabel' + user.getId()}">
+							<div class="modal-dialog">
+								<div class="modal-content">
+									<div class="modal-header">
+										<h5 class="modal-title" th:id="${'deleteUserModalLabel' + user.getId()}">
+											アカウントと予約データを削除してもよろしいですか？</h5>
+										<button type="button" class="btn-close" data-bs-dismiss="modal"
+											aria-label="閉じる"></button>
+									</div>
+									<div class="modal-footer">
+										<form method="post" th:action="@{/user/delete}" th:object="${user}">
+											<input type="hidden" th:field="*{id}" />
+											<button type="submit" class="btn btn-danger">はい</button>
+											<button type="button" class="btn btn-secondary"
+												data-bs-dismiss="modal">いいえ</button>
+										</form>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<div class="m-3">
+							<a th:href="@{/company/paidterms}">有料会員規約</a>
+						</div>
+
+						<div class="m-3" sec:authorize="hasRole('ROLE_FREEMEMBER')">
+							<a th:href="@{/user/register}">有料会員登録</a><label
+								style="color: chocolate;">　※テストカード番号：4242424242424242</label>
+						</div>
+
+						<div class="m-3" sec:authorize="hasRole('ROLE_PAYMEMBER')">
+							<a th:href="@{/user/stripeEdit}">クレジットカード情報変更</a>
+						</div>
+
+						<div id="cancel-subscription" class="m-3" sec:authorize="hasRole('ROLE_PAYMEMBER')">
+							<a href="#">有料会員解約</a>
+						</div>
+						<!-- モーダルウィンドウ -->
+						<div class="modal fade" id="cancelModal" tabindex="-1" role="dialog"
+							aria-labelledby="cancelModalLabel" aria-hidden="true">
+							<div class="modal-dialog" role="document">
+								<div class="modal-content">
+									<div class="modal-header">
+										<h5 class="modal-title" id="cancelModalLabel">解約確認</h5>
+									</div>
+									<div class="modal-body">
+										解約後は｢お気に入り登録｣機能が使用できなくなり、お気に入り登録したデータも削除されますが、解約しますか？
+									</div>
+									<div class="modal-footer">
+										<button type="button" class="btn btn-primary" id="confirm-cancel">解約する</button>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</main>
+
+		<!-- フッター -->
+		<div th:replace="~{fragment :: footer}"></div>
+	</div>
+
+	<div th:replace="~{fragment :: scripts}"></div>
+	<script src="/js/stripeCancel.js" defer></script>
+	<!-- Bootstrap JavaScript Bundle with Popper -->
+	<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+</body>
+
+</html>
